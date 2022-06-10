@@ -1,4 +1,5 @@
 import { fetchCountries } from './fetchCountries';
+import Notiflix from 'notiflix';
 const _ = require('lodash');
 import './css/styles.css';
 
@@ -11,50 +12,97 @@ const refs = {
 const DEBOUNCE_DELAY = 300;
 
 
+refs.input.addEventListener('input', _.debounce(inputHandler , DEBOUNCE_DELAY))
 
-refs.input.addEventListener('input',_.debounce( (e) => {
+
+const cleanMarkup = ref => (ref.innerHTML = '');
+
+
+function inputHandler (e){
    e.preventDefault()
-   if (fetchCountries > 10) {
-     alert('too much countries')
-   }else if (fetchCountries > 2 && fetchCountries < 10) {
-     return createCountryList
+
+   const textInput = e.target.value.trim()
+   
+   if (!textInput) {
+    cleanMarkup(refs.countryInfo);
+    cleanMarkup(refs.countryList);
+    return;
+  }
+
+   fetchCountries(textInput)
+      .then(data => {
+      console.log(data)
+      if (data.length > 10) {
+         return Notiflix.Notify.info('Too many matches found. Please enter a more specific name.');
+      } 
+         
+      addCountryMarkup(data)
+   })
+   .catch(error => {
+      cleanMarkup(refs.countryList);
+      cleanMarkup(refs.countryInfo);
+      Notiflix.Notify.failure("Oops, there is no country with that name")
+   })
+     
+   
+}
+
+
+
+function addCountryMarkup(data) {
+   console.log(data);
+   if (data.length === 1) { 
+      
+      cleanMarkup(refs.countryList);
+      refs.countryInfo.innerHTML = makeCountryInfoMarkup(data)
+      
+     
    } else {
-      return addingCountriesToMarkup
-   }
-   
-
-   
-} , DEBOUNCE_DELAY) )
-
-
-
-function createCountryList({ name }, { flags }) {
-   refs.countryInfo.classList.add('is-hidden')
-
-   return `
-   <li class="country-list__item">
-      <img src="${flags.svg}" alt="" class="country-list__img">
-      <p class="country-list__text">${name.official}</p>
-   </li>
-   `
+      cleanMarkup(refs.countryInfo);
+      refs.countryList.innerHTML = makeCountryListMarkup(data)
+      
+   } 
+  
+  
 }
 
-function createCountriesMarkup({ name }, { capital }, { population }, { flags }, { languages }) {
-  refs.countryInfo.classList.remove('is-hidden')
-   return `
-      <li class="country-info__item">
-        <img src="${flags.svg}" alt="flags" class="country-info__img">
-        <p class="country-info__text">Country: ${name.official}</p>
-        <p class="country-info__text">Capital: ${capital}</p>
-        <p class="country-info__text">Population: ${population}</p>
-        <p class="country-info__text">Languages: ${languages}</p>
-        
-      </li>
-   `
+
+
+function makeCountryListMarkup(data) {
+  
+   return data.map(
+      
+    ({ name, flags, }) =>
+      `<h1 class = 'country-title'><img src="${flags.png}" alt="${name.official}" width="60" height="40" class = 'country-img'>${
+        name.official
+      }</h1>
+      `
+  ).join('')
 }
-function addingCountriesToMarkup() {
-   refs.countryInfo.insertAdjacentHTML('beforeend', createCountriesMarkup)
-}
+
+function makeCountryInfoMarkup(data) {
+  
+   return data.map(
+    ({ name, capital, population, flags, languages }) =>
+      `<h1 class = 'country-title'><img src="${flags.png}" alt="${name.official}" width="60" height="40" class = 'country-img'>${
+        name.official
+      }</h1>
+      <p>Capital: ${capital}</p>
+      <p>Population: ${population}</p>
+      <p>Languages: ${Object.values(languages)}</p>`,
+  );
+};
+
+
+
+
+
+
+
+
+
+
+
 
 
 
