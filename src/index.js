@@ -13,7 +13,8 @@ const refs = {
 const DEBOUNCE_DELAY = 300;
 
 
-refs.input.addEventListener('input', _.debounce(inputHandler , DEBOUNCE_DELAY))
+refs.input.addEventListener('input', _.debounce(inputHandler, DEBOUNCE_DELAY))
+
 
 const cleanMarkup = ref => (ref.innerHTML = '');
 
